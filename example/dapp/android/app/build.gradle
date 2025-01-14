@@ -80,14 +80,14 @@ android {
         }
     }
 
-    signingConfigs {
-        debug {
-            storeFile file(keystoreProperties['WC_FILENAME'])
-            storePassword keystoreProperties['WC_STORE_PASSWORD']
-            keyAlias keystoreProperties['WC_KEYSTORE_ALIAS']
-            keyPassword keystoreProperties['WC_KEY_PASSWORD']
-        }
-    }
+//    signingConfigs {
+//        debug {
+//            storeFile file(keystoreProperties['WC_FILENAME'])
+//            storePassword keystoreProperties['WC_STORE_PASSWORD']
+//            keyAlias keystoreProperties['WC_KEYSTORE_ALIAS']
+//            keyPassword keystoreProperties['WC_KEY_PASSWORD']
+//        }
+//    }
 
     buildTypes {
         release {
