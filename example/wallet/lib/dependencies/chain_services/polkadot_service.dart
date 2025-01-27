@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:convert/convert.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:polkadart/scale_codec.dart';
+import 'package:solana_web3/solana_web3.dart' show hex;
 
 import 'package:walletconnect_flutter_v2/walletconnect_flutter_v2.dart';
 import 'package:walletconnect_flutter_v2_wallet/dependencies/i_web3wallet_service.dart';

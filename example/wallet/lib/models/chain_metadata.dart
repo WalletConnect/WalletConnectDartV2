@@ -7,6 +7,7 @@ enum ChainType {
   cosmos,
   kadena,
   polkadot,
+  bitcoin,
 }
 
 class ChainMetadata {

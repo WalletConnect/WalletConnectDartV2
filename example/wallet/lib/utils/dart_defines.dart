@@ -1,8 +1,12 @@
 class DartDefines {
-  static const String projectId = String.fromEnvironment(
-    'PROJECT_ID',
-  );
+  static const projectId = String.fromEnvironment('PROJECT_ID');
   // HARDCODED TEST KEYS
+  // ETHEREUM
+  static const ethereumSecretKey = String.fromEnvironment(
+    'ETH_SECRET_KEY',
+    defaultValue:
+        'spoil video deputy round immense setup wasp secret maze slight bag what',
+  );
   // KADENA
   static const kadenaSecretKey = String.fromEnvironment(
     'KADENA_SECRET_KEY',
@@ -28,7 +32,7 @@ class DartDefines {
   static const polkadotMnemonic = String.fromEnvironment(
     'POLKADOT_MNEMONIC',
     defaultValue:
-        'shove trumpet draw priority either tonight million worry dust vivid twelve solid',
+        'spoil video deputy round immense setup wasp secret maze slight bag what',
   );
   static const polkadotAddress = String.fromEnvironment(
     'POLKADOT_ADDRESS',

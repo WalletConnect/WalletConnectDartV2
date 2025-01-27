@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:convert/convert.dart';
+import 'package:solana_web3/solana_web3.dart' show hex;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walletconnect_flutter_v2/walletconnect_flutter_v2.dart';
 

@@ -11,6 +11,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:walletconnect_flutter_v2_dapp/models/chain_metadata.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/constants.dart';
+import 'package:walletconnect_flutter_v2_dapp/utils/crypto/bitcoin.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/crypto/chain_data.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/crypto/eip155.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/crypto/polkadot.dart';
@@ -88,6 +89,16 @@ class ConnectPageState extends State<ConnectPage> {
         chains: evmChains.map((c) => c.chainId).toList(),
         methods: EIP155.methods.values.toList(),
         events: EIP155.events.values.toList(),
+      );
+    }
+
+    final btcChains =
+        _selectedChains.where((e) => e.type == ChainType.bip122).toList();
+    if (btcChains.isNotEmpty) {
+      optionalNamespaces['bip122'] = RequiredNamespace(
+        chains: btcChains.map((c) => c.chainId).toList(),
+        methods: Bitcoin.methods.values.toList(),
+        events: Bitcoin.events.values.toList(),
       );
     }
 

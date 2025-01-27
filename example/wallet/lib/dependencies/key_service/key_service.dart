@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-import 'package:convert/convert.dart';
+import 'package:bitcoin_base/bitcoin_base.dart';
+import 'package:solana_web3/solana_web3.dart' show hex;
 import 'package:flutter/foundation.dart';
 import 'package:walletconnect_flutter_v2/apis/core/crypto/crypto_models.dart';
 import 'package:walletconnect_flutter_v2/walletconnect_flutter_v2.dart';
@@ -83,8 +84,7 @@ class KeyService extends IKeyService {
 
   @override
   Future<void> loadDefaultWallet() async {
-    const mnemonic =
-        'spoil video deputy round immense setup wasp secret maze slight bag what';
+    const mnemonic = DartDefines.ethereumSecretKey;
     await restoreWalletFromSeed(mnemonic: mnemonic);
   }
 
@@ -136,10 +136,10 @@ class KeyService extends IKeyService {
     }
 
     final seed = bip39.mnemonicToSeed(mnemonic);
-    final root = bip32.BIP32.fromSeed(seed);
+    final node = bip32.BIP32.fromSeed(seed);
+    final child = node.derivePath("m/44'/60'/0'/0/$index");
 
-    final child = root.derivePath("m/44'/60'/0'/0/$index");
-    final private = hex.encode(child.privateKey as List<int>);
+    final private = hex.encode(child.privateKey!);
     final public = hex.encode(child.publicKey);
     return CryptoKeyPair(private, public);
   }
@@ -164,11 +164,13 @@ class KeyService extends IKeyService {
     final kadenaChainKey = _kadenaChainKey();
     final polkadotChainKey = _polkadotChainKey();
     final solanaChainKeys = _solanaChainKey();
+    final bitcoinChainKeys = await _bitcoinChainKey();
     //
     return [
       kadenaChainKey,
       polkadotChainKey,
       solanaChainKeys,
+      bitcoinChainKeys,
     ];
   }
 
@@ -196,6 +198,54 @@ class KeyService extends IKeyService {
       privateKey: DartDefines.solanaSecretKey,
       publicKey: DartDefines.solanaAddress,
       address: DartDefines.solanaAddress,
+    );
+  }
+
+  Future<ChainKey> _bitcoinChainKey() async {
+    final mnemonic = await getMnemonic();
+    final seed = bip39.mnemonicToSeed(mnemonic);
+    final node = bip32.BIP32.fromSeed(seed);
+    final child = node.derivePath("m/84'/0'/0'/0/0");
+    final strng = child.toBase58();
+    final restored = bip32.BIP32.fromBase58(strng);
+    final privateKey = ECPrivate.fromBytes(restored.privateKey!.toList());
+
+    const network = BitcoinNetwork.mainnet;
+    final wif = privateKey.toWif(network: network);
+    final publicKey = privateKey.getPublic();
+
+    // Generate a Pay-to-Public-Key-Hash (P2PKH) address from the public key.
+    final p2pkh = publicKey.toAddress();
+    debugPrint('[$runtimeType] p2pkh ${p2pkh.toAddress(network)}');
+    // Generate a Pay-to-Witness-Public-Key-Hash (P2WPKH) Segregated Witness (SegWit) address from the public key.
+    final p2wpkh = publicKey.toSegwitAddress();
+    debugPrint('[$runtimeType] p2wpkh ${p2wpkh.toAddress(network)}');
+    // // Generate a Pay-to-Witness-Script-Hash (P2WSH) Segregated Witness (SegWit) address from the public key.
+    // final p2wsh = publicKey.toP2wshAddress();
+    // debugPrint('[$runtimeType] p2wsh ${p2wsh.toAddress(network)}');
+    // // Generate a Taproot address from the public key.
+    // final p2tr = publicKey.toTaprootAddress();
+    // debugPrint('[$runtimeType] p2tr ${p2tr.toAddress(network)}');
+    // // Generate a Pay-to-Public-Key-Hash (P2PKH) inside Pay-to-Script-Hash (P2SH) address from the public key.
+    // final p2pkhInP2sh = publicKey.toP2pkhInP2sh();
+    // debugPrint('[$runtimeType] p2pkhInP2sh ${p2pkhInP2sh.toAddress(network)}');
+    // // Generate a Pay-to-Witness-Public-Key-Hash (P2WPKH) inside Pay-to-Script-Hash (P2SH) address from the public key.
+    // final p2wpkhInP2sh = publicKey.toP2wpkhInP2sh();
+    // debugPrint(
+    //     '[$runtimeType] p2wpkhInP2sh ${p2wpkhInP2sh.toAddress(network)}');
+    // // Generate a Pay-to-Witness-Script-Hash (P2WSH) inside Pay-to-Script-Hash (P2SH) address from the public key.
+    // final p2wshInP2sh = publicKey.toP2wshInP2sh();
+    // debugPrint('[$runtimeType] p2wshInP2sh ${p2wshInP2sh.toAddress(network)}');
+    // // Generate a Pay-to-Public-Key (P2PK) inside Pay-to-Script-Hash (P2SH) address from the public key.
+    // final p2pkInP2sh = publicKey.toP2pkInP2sh();
+    // debugPrint('[$runtimeType] p2pkInP2sh ${p2pkInP2sh.toAddress(network)}');
+
+    //
+    return ChainKey(
+      chains: ChainData.bitcoinChains.map((e) => e.chainId).toList(),
+      privateKey: wif,
+      publicKey: p2pkh.toAddress(network),
+      address: p2wpkh.toAddress(network),
     );
   }
 }

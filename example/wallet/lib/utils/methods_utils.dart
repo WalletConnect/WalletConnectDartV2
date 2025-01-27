@@ -57,6 +57,7 @@ class MethodsUtils {
     debugPrint(
         '[SampleWallet] handleRedirect topic: $topic, redirect: $redirect, error: $error');
     openApp(topic, redirect, onFail: (e) {
+      debugPrint('[SampleWallet] handleRedirect error $e');
       goBackModal(
         title: 'Error',
         message: error,
@@ -93,7 +94,7 @@ class MethodsUtils {
       closeAfter: success ? 3 : 0,
       widget: Container(
         color: Colors.white,
-        height: 210.0,
+        height: 300.0,
         width: double.infinity,
         padding: const EdgeInsets.all(20.0),
         child: Column(

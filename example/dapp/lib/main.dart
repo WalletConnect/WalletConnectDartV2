@@ -124,20 +124,10 @@ class _MyHomePageState extends State<MyHomePage> {
     _web3App!.onSessionAuthResponse.subscribe(_onSessionAuthResponse);
 
     await _web3App!.init();
+    await _registerEventHandlers();
 
     DeepLinkHandler.init(_web3App!);
     DeepLinkHandler.checkInitialLink();
-
-    // Loop through all the chain data
-    for (final ChainMetadata chain in ChainData.allChains) {
-      // Loop through the events for that chain
-      for (final event in getChainEvents(chain.type)) {
-        _web3App!.registerEventHandler(
-          chainId: chain.chainId,
-          event: event,
-        );
-      }
-    }
 
     setState(() {
       _pageDatas = [
@@ -165,6 +155,25 @@ class _MyHomePageState extends State<MyHomePage> {
 
       _initializing = false;
     });
+  }
+
+  Future<void> _registerEventHandlers() async {
+    if (!_web3App!.core.connectivity.isOnline.value) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      _registerEventHandlers();
+      return;
+    }
+
+    // Loop through all the chain data
+    for (final ChainMetadata chain in ChainData.allChains) {
+      // Loop through the events for that chain
+      for (final event in getChainEvents(chain.type)) {
+        _web3App!.registerEventHandler(
+          chainId: chain.chainId,
+          event: event,
+        );
+      }
+    }
   }
 
   void _onSessionConnect(SessionConnect? event) {

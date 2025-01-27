@@ -61,6 +61,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 //
                 const SizedBox(height: 20.0),
                 const Divider(height: 1.0),
+                _BitcoinAccounts(),
+                const SizedBox(height: 20.0),
+                const Divider(height: 1.0),
                 _SolanaAccounts(),
                 const SizedBox(height: 20.0),
                 const Divider(height: 1.0),
@@ -436,6 +439,54 @@ class _KadenaAccounts extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Kadena Account',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          child: Column(
+            children: [
+              _DataContainer(
+                title: 'Address',
+                data: chainKeys.first.address,
+              ),
+              const SizedBox(height: 12.0),
+              _DataContainer(
+                title: 'Secret key',
+                data: chainKeys.first.privateKey,
+                blurred: true,
+              ),
+            ],
+          ),
+        )
+      ],
+    );
+  }
+}
+
+class _BitcoinAccounts extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final keysService = GetIt.I<IKeyService>();
+    final chainKeys = keysService.getKeysForChain('bip122');
+    if (chainKeys.isEmpty) return const SizedBox.shrink();
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              SizedBox.square(dimension: 8.0),
+              Expanded(
+                child: Text(
+                  'Bitcoin Account',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 16.0,

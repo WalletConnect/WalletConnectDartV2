@@ -98,25 +98,19 @@ class ChainData {
   static final List<ChainMetadata> solanaChains = [
     const ChainMetadata(
       type: ChainType.solana,
-      chainId: 'solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ',
-      name: 'Solana Mainnet 1',
+      chainId: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+      name: 'Solana Mainnet',
       logo: '/chain-logos/solana.png',
       color: Color.fromARGB(255, 247, 0, 255),
-      rpc: [
-        'https://rpc.ankr.com/solana',
-        'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
-      ],
+      rpc: ['https://api.mainnet-beta.solana.com'],
     ),
     const ChainMetadata(
       type: ChainType.solana,
-      chainId: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
-      name: 'Solana Mainnet 2',
+      chainId: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
+      name: 'Solana Devnet',
       logo: '/chain-logos/solana.png',
       color: Color.fromARGB(255, 247, 0, 255),
-      rpc: [
-        'https://rpc.ankr.com/solana',
-        'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
-      ],
+      rpc: ['https://api.devnet.solana.com'],
     ),
     const ChainMetadata(
       type: ChainType.solana,
@@ -125,9 +119,7 @@ class ChainData {
       logo: '/chain-logos/solana.png',
       color: Colors.black,
       isTestnet: true,
-      rpc: [
-        'https://api.testnet.solana.com',
-      ],
+      rpc: ['https://api.testnet.solana.com'],
     ),
   ];
 
@@ -197,10 +189,34 @@ class ChainData {
     ),
   ];
 
+  static final List<ChainMetadata> bitcoinChains = [
+    const ChainMetadata(
+      type: ChainType.bip122,
+      chainId:
+          'bip122:000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f',
+      name: 'Bitcoin Mainnet',
+      logo: '/chain-logos/bitcoin.png',
+      color: Color.fromARGB(255, 255, 161, 9),
+      rpc: ['https://bitcoin.drpc.org/'],
+    ),
+    const ChainMetadata(
+      type: ChainType.bip122,
+      chainId:
+          'bip122:000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943',
+      name: 'Bitcoin Signet',
+      logo: '/chain-logos/bitcoin.png',
+      color: Color.fromARGB(255, 255, 161, 9),
+      rpc: ['https://signet.bitcoinrpc.org'],
+      // https://bitcoin-testnet.drpc.org
+      isTestnet: true,
+    ),
+  ];
+
   static final List<ChainMetadata> allChains = [
     ...eip155Chains,
     ...solanaChains,
     ...polkadotChains,
+    ...bitcoinChains,
     // ...kadenaChains,
     // ...cosmosChains,
   ];

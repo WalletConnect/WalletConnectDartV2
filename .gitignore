@@ -53,6 +53,9 @@ app.*.map.json
 # fvm
 .fvm/
 
+**/secrets.properties
+**/*.keystore
+
 # vscode
 .vscode/
 

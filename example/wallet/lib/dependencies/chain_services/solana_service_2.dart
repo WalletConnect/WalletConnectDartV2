@@ -9,16 +9,18 @@ import 'package:walletconnect_flutter_v2_wallet/dependencies/i_web3wallet_servic
 import 'package:walletconnect_flutter_v2_wallet/dependencies/key_service/i_key_service.dart';
 import 'package:walletconnect_flutter_v2_wallet/models/chain_metadata.dart';
 
-import 'package:solana/solana.dart' as solana;
-import 'package:solana/encoder.dart' as solana_encoder;
+import 'package:solana_web3/solana_web3.dart' as solana;
+// ignore: implementation_imports
+import 'package:solana_web3/src/crypto/nacl.dart' as nacl;
 // ignore: depend_on_referenced_packages
 import 'package:bs58/bs58.dart';
+
 import 'package:walletconnect_flutter_v2_wallet/utils/methods_utils.dart';
 
 ///
-/// Uses solana: ^0.30.4
+/// Uses solana_web3: ^0.1.3
 ///
-class SolanaService {
+class SolanaService2 {
   Map<String, dynamic Function(String, dynamic)> get solanaRequestHandlers => {
         'solana_signMessage': solanaSignMessage,
         'solana_signTransaction': solanaSignTransaction,
@@ -27,7 +29,7 @@ class SolanaService {
   final _web3wallet = GetIt.I<IWeb3WalletService>().web3wallet;
   final ChainMetadata chainSupported;
 
-  SolanaService({required this.chainSupported}) {
+  SolanaService2({required this.chainSupported}) {
     for (var handler in solanaRequestHandlers.entries) {
       _web3wallet.registerRequestHandler(
         chainId: chainSupported.chainId,
@@ -55,10 +57,13 @@ class SolanaService {
         decodedMessage,
         method: pRequest.method,
         chainId: pRequest.chainId,
-        address: keyPair.address,
+        address: keyPair.pubkey.toBase58(),
         transportType: pRequest.transportType.name,
       )) {
-        final signature = await keyPair.sign(base58Decoded.toList());
+        final signature = await nacl.sign.detached(
+          base58Decoded,
+          keyPair.seckey,
+        );
 
         response = response.copyWith(
           result: {
@@ -77,11 +82,6 @@ class SolanaService {
         error: JsonRpcError(code: 0, message: e.toString()),
       );
     }
-
-    await _web3wallet.respondSessionRequest(
-      topic: topic,
-      response: response,
-    );
 
     _handleResponseForTopic(topic, response);
   }
@@ -103,26 +103,21 @@ class SolanaService {
         beautifiedTrx,
         method: pRequest.method,
         chainId: pRequest.chainId,
-        address: keyPair.address,
+        address: keyPair.pubkey.toBase58(),
         transportType: pRequest.transportType.name,
       )) {
         // Sign the transaction.
-        // if params contains `transaction` key we should parse that one and disregard the rest
+        // if params contains `transaction` key we should parse that one and disregard the rest, see https://docs.walletconnect.com/advanced/multichain/rpc-reference/solana-rpc#solana_signtransaction
         if (params.containsKey('transaction')) {
-          final transaction = params['transaction'] as String;
-          final transactionBytes = base64.decode(transaction);
-          final signedTx = solana_encoder.SignedTx.fromBytes(
-            transactionBytes,
-          );
+          final encodedTx = params['transaction'] as String;
+          final decodedTx = solana.Transaction.fromBase64(encodedTx);
 
           // Sign the transaction.
-          final signature = await keyPair.sign(
-            signedTx.compiledMessage.toByteArray(),
-          );
+          decodedTx.sign([keyPair]);
 
           response = response.copyWith(
             result: {
-              'signature': signature.toBase58(),
+              'signature': decodedTx.signatures.first.toBase58(),
             },
           );
         } else {
@@ -135,20 +130,18 @@ class SolanaService {
             return (json as Map<String, dynamic>).toInstruction();
           }).toList();
 
-          final message = solana.Message(instructions: instructions);
-          final compiledMessage = message.compile(
+          final decodedTx = solana.Transaction.v0(
+            payer: solana.Pubkey.fromBase58(feePayer),
+            instructions: instructions,
             recentBlockhash: recentBlockHash,
-            feePayer: solana.Ed25519HDPublicKey.fromBase58(feePayer),
           );
 
           // Sign the transaction.
-          final signature = await keyPair.sign(
-            compiledMessage.toByteArray(),
-          );
+          decodedTx.sign([keyPair]);
 
           response = response.copyWith(
             result: {
-              'signature': signature.toBase58(),
+              'signature': decodedTx.signatures.first.toBase58(),
             },
           );
         }
@@ -164,22 +157,21 @@ class SolanaService {
       );
     }
 
-    await _web3wallet.respondSessionRequest(
-      topic: topic,
-      response: response,
-    );
-
     _handleResponseForTopic(topic, response);
   }
 
-  Future<solana.Ed25519HDKeyPair> _getKeyPair() async {
+  Future<solana.Keypair> _getKeyPair() async {
     final keys = GetIt.I<IKeyService>().getKeysForChain(
       chainSupported.chainId,
     );
-    final secKeyBytes = keys[0].privateKey.parse32Bytes();
-    return await solana.Ed25519HDKeyPair.fromPrivateKeyBytes(
-      privateKey: secKeyBytes,
-    );
+    try {
+      final secKeyBytes = keys[0].privateKey.parse32Bytes();
+      return solana.Keypair.fromSeedSync(secKeyBytes);
+    } catch (e) {
+      final secKeyBytes = base58.decode(keys[0].privateKey);
+      // final bytes = Uint8List.fromList(secKeyBytes.sublist(0, 32));
+      return solana.Keypair.fromSeckeySync(secKeyBytes);
+    }
   }
 
   void _handleResponseForTopic(String topic, JsonRpcResponse response) async {
@@ -205,41 +197,37 @@ class SolanaService {
   }
 }
 
-extension on String {
-  // SigningKey used by solana package requires a 32 bytes key
-  Uint8List parse32Bytes() {
-    try {
-      final List<int> secBytes = split(',').map((e) => int.parse(e)).toList();
-      return Uint8List.fromList(secBytes.sublist(0, 32));
-    } catch (e) {
-      final secKeyBytes = base58.decode(this);
-      return Uint8List.fromList(secKeyBytes.sublist(0, 32));
-    }
-  }
-}
-
 extension on Map<String, dynamic> {
-  solana_encoder.Instruction toInstruction() {
+  solana.TransactionInstruction toInstruction() {
     final programId = this['programId'] as String;
-    final programKey =
-        solana.Ed25519HDPublicKey(base58.decode(programId).toList());
 
-    final data = (this['data'] as List).map((e) => e as int).toList();
-    final data58 = base58.encode(Uint8List.fromList(data));
-    final dataBytes = solana_encoder.ByteArray.fromBase58(data58);
+    final data = (this['data'] as String);
+    final dataBytes = base64.decode(data);
 
     final keys = this['keys'] as List;
-    return solana_encoder.Instruction(
-      programId: programKey,
+    return solana.TransactionInstruction(
+      programId: solana.Pubkey.fromBase58(programId),
       data: dataBytes,
-      accounts: keys.map((k) {
+      keys: keys.map((k) {
         final kParams = (k as Map<String, dynamic>);
-        return solana_encoder.AccountMeta(
-          pubKey: solana.Ed25519HDPublicKey.fromBase58(kParams['pubkey']),
-          isWriteable: kParams['isWritable'] as bool,
+        return solana.AccountMeta(
+          solana.Pubkey.fromBase58(kParams['pubkey']),
           isSigner: kParams['isSigner'] as bool,
+          isWritable: kParams['isWritable'] as bool,
         );
       }).toList(),
     );
   }
+}
+
+extension on String {
+  // SigningKey used by solana package requires a 32 bytes key
+  Uint8List parse32Bytes() {
+    final List<int> secBytes = split(',').map((e) => int.parse(e)).toList();
+    return Uint8List.fromList(secBytes.sublist(0, 32));
+  }
+}
+
+extension on Uint8List {
+  String toBase58() => base58.encode(this);
 }

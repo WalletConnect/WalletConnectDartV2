@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:walletconnect_flutter_v2_dapp/models/chain_metadata.dart';
+import 'package:walletconnect_flutter_v2_dapp/utils/crypto/bitcoin.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/crypto/chain_data.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/crypto/eip155.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/crypto/polkadot.dart';
@@ -36,6 +37,8 @@ List<String> getChainMethods(ChainType value) {
       return Solana.methods.values.toList();
     case ChainType.polkadot:
       return Polkadot.methods.values.toList();
+    case ChainType.bip122:
+      return Bitcoin.methods.values.toList();
     default:
       return [];
   }

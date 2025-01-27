@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:walletconnect_flutter_v2_dapp/models/chain_metadata.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/constants.dart';
+import 'package:walletconnect_flutter_v2_dapp/utils/crypto/bitcoin.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/crypto/eip155.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/crypto/helpers.dart';
 import 'package:walletconnect_flutter_v2_dapp/utils/crypto/polkadot.dart';
@@ -170,7 +171,8 @@ class SessionWidgetState extends State<SessionWidget> {
   ) {
     final List<Widget> buttons = [];
     // Add Methods
-    for (final String method in getChainMethods(chainMetadata.type)) {
+    final chainMethods = getChainMethods(chainMetadata.type);
+    for (final method in chainMethods) {
       final namespaces = widget.session.namespaces[chainMetadata.type.name];
       final supported = namespaces?.methods.contains(method) ?? false;
       buttons.add(
@@ -233,6 +235,14 @@ class SessionWidgetState extends State<SessionWidget> {
           chainData: chainMetadata,
           address: address,
         );
+      case ChainType.bip122:
+        return Bitcoin.callMethod(
+          web3App: widget.web3App,
+          topic: widget.session.topic,
+          method: method,
+          chainData: chainMetadata,
+          address: address,
+        );
       case ChainType.polkadot:
         return Polkadot.callMethod(
           web3App: widget.web3App,
@@ -248,7 +258,9 @@ class SessionWidgetState extends State<SessionWidget> {
           method: method,
           chainData: chainMetadata,
           address: address,
+          isV0: true,
         );
+
       // case ChainType.kadena:
       //   return Kadena.callMethod(
       //     web3App: widget.web3App,
